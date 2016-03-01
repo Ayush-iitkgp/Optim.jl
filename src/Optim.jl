@@ -1,7 +1,7 @@
 VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Optim
-    using Calculus
+    using Calculus, PositiveFactorizations
     using Compat
 
     import Base.length,
@@ -26,6 +26,7 @@ module Optim
            GradientDescent,
            LBFGS,
            MomentumGradientDescent,
+           ModifiedNewton,
            NelderMead,
            Newton,
            SimulatedAnnealing
@@ -65,6 +66,7 @@ module Optim
 
     # Newton and Quasi-Newton Methods
     include("newton.jl")
+    include("modified_newton.jl")
     include("bfgs.jl")
     include("l_bfgs.jl")
 
