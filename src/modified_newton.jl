@@ -73,9 +73,11 @@ function optimize{T}(d::TwiceDifferentiableFunction,
         iteration += 1
 
         # Search direction is always the negative gradient divided by 
-        # the "closest" positive definite matrix to H. This step is
-        # the modified part. It makes sure that the algorithm moves
-        # downhill in both convex and concave regions.
+        # a matrix encoding the absolute values of the curvatures 
+        # represented by H.. This step is the modified part. It 
+        # deviates from the usual "add a scaled identity matrix",
+        # version of the modified Newton method. More informatoin
+        # can be found in the discussion at issue #153. 
         F, Hd = ldltfact!(Positive, H)
         s[:] = -(F\gr)
 
