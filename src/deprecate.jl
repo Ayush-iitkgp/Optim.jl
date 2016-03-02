@@ -9,8 +9,7 @@ const method_lookup = Dict{Symbol, Type}(
   :simulated_annealing => SimulatedAnnealing,
   :brent => Brent,
   :golden_section => GoldenSection,
-  :accelerated_gradient_descent => AcceleratedGradientDescent,
-  :fminbox => Fminbox)
+  :accelerated_gradient_descent => AcceleratedGradientDescent)
 
 function get_optimizer(method::Symbol)
     T = method_lookup[method]
@@ -84,5 +83,4 @@ end
 
 @deprecate fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
                     initial_x::Array{T}, l::Array{T}, u::Array{T};
-                    optimizer = cg, nargs...) optimize(df, initial_x, l, u, Fminbox(); optimizer = get_optimizer(symbol(optimizer)), nargs...)
-
+                    optimizer = cg, nargs...) optimize(df, initial_x, l, u; optimizer = get_optimizer(symbol(optimizer)), nargs...)

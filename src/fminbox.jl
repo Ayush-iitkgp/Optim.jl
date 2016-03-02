@@ -105,14 +105,11 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-immutable Fminbox <: Optimizer end
-
 function optimize{T<:AbstractFloat}(
         df::DifferentiableFunction,
         initial_x::Array{T},
         l::Array{T},
-        u::Array{T},
-        ::Fminbox;
+        u::Array{T};
         xtol::T = eps(T),
         ftol::T = sqrt(eps(T)),
         grtol::T = sqrt(eps(T)),
@@ -128,6 +125,9 @@ function optimize{T<:AbstractFloat}(
         mufactor::T = convert(T, 0.001),
         precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
         optimizer = ConjugateGradient,
+        optimizer_o = OptimizationOptions(store_trace = store_trace,
+                                          show_trace = show_trace,
+                                          extended_trace = extended_trace),
         nargs...)
 
     x = copy(initial_x)
@@ -161,12 +161,18 @@ function optimize{T<:AbstractFloat}(
     g = similar(x)
     valboth = Array(T, 2)
     fval_all = Array(Vector{T}, 0)
-    fcount_all = 0
+
+    # Count the total number of outer iterations
+    iteration = 0
+
     xold = similar(x)
     converged = false
     local results
     first = true
-    while true
+    while !converged && iteration < iterations
+        # Increment the number of steps we've had to perform
+        iteration += 1
+
         copy!(xold, x)
         # Optimize with current setting of mu
         funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, valboth, fb, mu)
@@ -177,10 +183,10 @@ function optimize{T<:AbstractFloat}(
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
         resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep = pcp),
-                              OptimizationOptions(xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
-                                                  store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace))
+                              optimizer_o)
         if first == true
             results = resultsnew
+            first = false
         else
             append!(results, resultsnew)
         end
@@ -196,12 +202,12 @@ function optimize{T<:AbstractFloat}(
         @simd for i = 1:length(x)
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
+
         x_converged, f_converged, gr_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, xtol, ftol, grtol)
-        if converged
-            break
-        end
+
     end
+    results.method = "Fminbox with $(results.method)"
     results.initial_x = initial_x
+    results.f_minimum = df.f(results.minimum)
     results
 end
-export fminbox
