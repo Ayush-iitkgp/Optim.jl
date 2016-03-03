@@ -42,7 +42,7 @@ end
 l = fill(-boxl, N)
 u = fill(boxl, N)
 x0 = (rand(N)-0.5)*boxl
-results = Optim.optimize(objective, x0, l, u, Fminbox())
+results = Optim.optimize(objective, x0, l, u)
 @test Optim.converged(results)
 g = similar(x0)
 objective.fg!(results.minimum, g)
